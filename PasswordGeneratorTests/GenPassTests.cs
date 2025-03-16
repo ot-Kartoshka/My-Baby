@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -38,73 +37,49 @@ namespace PasswordGeneratorTests
         }
 
         [Test]
-        public void Program_ReadsLengthFromStdin()
-        {
-            var process = StartProcessWithInput("8");
-
-            string output = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit();
-
-            Assert.That(output.Length, Is.EqualTo(8), $"Очікувалось 8 символів, але отримано: {output.Length}");
-        }
-
-        [Test]
         public void Program_ReturnsExitCode0_OnSuccess()
         {
-            var process = StartProcessWithInput("10");
-            process.WaitForExit();
-
-            Assert.That(process.ExitCode, Is.EqualTo(0), $"Очікуваний код виходу: 0, отримано: {process.ExitCode}");
+            using (var sw = new StringWriter())
+            {
+                Console.SetOut(sw);
+                int exitCode = Program.GenPass.Main(new string[] { "10" });
+                Assert.That(exitCode, Is.EqualTo(0), $"Очікуваний код виходу: 0, отримано: {exitCode}");
+            }
         }
 
         [Test]
         public void Program_ReturnsNonZeroExitCode_OnInvalidInput()
         {
-            var process = StartProcessWithInput("invalid");
-            process.WaitForExit();
-
-            Assert.That(process.ExitCode, Is.Not.EqualTo(0), "Очікувався ненульовий код виходу при помилці.");
+            int exitCode = Program.GenPass.Main(new string[] { "asd" });
+            Assert.That(exitCode, Is.Not.EqualTo(0), "Очікувався ненульовий код виходу при помилці.");
         }
 
         [Test]
         public void Program_WritesErrorToStderr_OnInvalidInput()
         {
-            var process = StartProcessWithInput("0");
-
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            Assert.That(error, Does.Contain("Error: Invalid password length"), $"Отримано stderr: {error}");
+            using (var sw = new StringWriter())
+            {
+                Console.SetError(sw);
+                Program.GenPass.Main(new string[] { "0" });
+                string error = sw.ToString();
+                Assert.That(error, Does.Contain("Error: Invalid password length"), $"Отримано stderr: {error}");
+            }
         }
 
-        private Process StartProcessWithInput(string input)
+        [Test]
+        public void Program_ReadsLengthFromStdin()
         {
-            string exePath = Path.GetFullPath(Path.Combine(
-    TestContext.CurrentContext.TestDirectory,
-    @"..\..\..\program\bin\Debug\program.exe"
-));
-
-            var process = new Process
+            using (var sw = new StringWriter())
             {
-                StartInfo = new ProcessStartInfo
+                Console.SetOut(sw);
+                using (var sr = new StringReader("8"))
                 {
-                    FileName = exePath,
-                    Arguments = "",
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    Console.SetIn(sr);
+                    Program.GenPass.Main(new string[] { });
+                    string output = sw.ToString().Trim();
+                    Assert.That(output.Length, Is.EqualTo(8), $"Очікувалось 8 символів, але отримано: {output.Length}");
                 }
-            };
-
-            process.Start();
-            using (var writer = process.StandardInput)
-            {
-                writer.WriteLine(input);
             }
-
-            return process;
         }
     }
 }

@@ -7,25 +7,38 @@ namespace Program
     {
         private static readonly Random random = new Random();
 
-        public static void Main()
+        public static int Main(string[] args)
         {
             try
             {
-                string input = Console.ReadLine();
-                if (!int.TryParse(input, out int length) || length < 1)
+                int length;
+                if (args.Length == 0)
                 {
-                    Console.Error.WriteLine("Error: Invalid password length.");
-                    Environment.Exit(1);
+                    Console.Write("");
+                    string input = Console.ReadLine();
+                    if (!int.TryParse(input, out length) || length < 1)
+                    {
+                        Console.Error.WriteLine("Error: Invalid password length.");
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (!int.TryParse(args[0], out length) || length < 1)
+                    {
+                        Console.Error.WriteLine("Error: Invalid password length.");
+                        return 1;
+                    }
                 }
 
                 string password = GeneratePassword(length);
                 Console.WriteLine(password);
-                Environment.Exit(0);
+                return 0;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Unexpected error: {ex.Message}");
-                Environment.Exit(1);
+                return 1;
             }
         }
 
