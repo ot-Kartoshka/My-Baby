@@ -20,6 +20,7 @@ namespace Program
 
                 string password = GeneratePassword(length);
                 Console.WriteLine(password);
+                Environment.Exit(0);
             }
             catch (Exception ex)
             {
